@@ -63,6 +63,7 @@ Public Class TaskService
     End Sub
 
     Public Function PollCommands() As Commands
+        Console.Write(">>")
         Dim cmd As String = Console.ReadLine()
         Return CommandParser.ParseCommand(cmd)
     End Function
@@ -72,9 +73,9 @@ Public Class TaskService
             Dim cmd As Commands = PollCommands()
             Select Case cmd
                 Case Commands._add
-                    Console.WriteLine(vbLf + "Title: ")
+                    Console.Write(vbLf + "Title: ")
                     Dim title As String = Console.ReadLine()
-                    Console.WriteLine(vbLf + "Description: ")
+                    Console.Write(vbLf + "Description: ")
                     Dim description As String = Console.ReadLine()
                     Dim task As New TaskItem(title, description)
                     _taskitems.Add(task)
@@ -82,18 +83,25 @@ Public Class TaskService
                     Console.WriteLine(vbLf + "Task created succesfully!" + vbLf)
                     Return True
                 Case Commands._list
+                    Console.WriteLine("****************************************************************" + vbLf)
+                    If _taskitems.Count = 0 Then
+                        Console.WriteLine("No tasks to be done" + vbLf)
+                    End If
                     For Each TaskItem In _taskitems
-                        Console.WriteLine(vbLf + "ID: " + TaskItem.Id.ToString +
+                        Console.Write("ID: " + TaskItem.Id.ToString +
                                           vbLf + "Task: " + TaskItem.Title +
                                           vbLf + "Description: " + TaskItem.Description +
                                           vbLf + "Created at: " + TaskItem.CreatedAt +
-                                          vbLf + "Completed: " + TaskItem.IsCompleted.ToString)
+                                          vbLf + "Completed: " + TaskItem.IsCompleted.ToString +
+                                          vbLf)
                         If TaskItem.IsCompleted Then
                             Console.WriteLine("Completed at: " + TaskItem.CompletedAt + vbLf)
                         End If
                     Next
+                    Console.WriteLine(vbLf + "****************************************************************" + vbLf)
                     Return True
                 Case Commands._list_open
+                    Console.WriteLine("****************************************************************" + vbLf)
                     For Each TaskItem In _taskitems
                         If Not TaskItem.IsCompleted Then
                             Console.WriteLine(vbLf + "ID: " + TaskItem.Id.ToString +
@@ -103,8 +111,10 @@ Public Class TaskService
                                               vbLf)
                         End If
                     Next
+                    Console.WriteLine(vbLf + "****************************************************************" + vbLf)
                     Return True
                 Case Commands._list_done
+                    Console.WriteLine("****************************************************************" + vbLf)
                     For Each TaskItem In _taskitems
                         If TaskItem.IsCompleted Then
                             Console.WriteLine(vbLf + "ID: " + TaskItem.Id.ToString +
@@ -116,31 +126,40 @@ Public Class TaskService
                                               vbLf)
                         End If
                     Next
+                    Console.WriteLine(vbLf + "****************************************************************" + vbLf)
                     Return True
                 Case Commands._complete_id
-                    Console.WriteLine("ID: ")
+                    Console.Write(vbLf + "ID: ")
                     Dim id As String = Console.ReadLine()
                     Dim completed_id As Guid = Guid.Parse(id)
                     For Each TaskItem In _taskitems
                         If TaskItem.Id = completed_id Then
+                            If TaskItem.IsCompleted() Then
+                                Console.WriteLine(vbLf + "Task was already completed!" + vbLf)
+                                Return True
+                            End If
                             TaskItem.Complete()
                         End If
                     Next
                     _repository.SaveTasks(_taskitems)
+                    Console.WriteLine(vbLf + "Task completed successfully. Great job!" + vbLf)
                     Return True
-                Case Commands._delete_id 'DOESNT WORK MAAAAAAAAN'
-                    Console.WriteLine("ID: ")
+                Case Commands._delete_id
+                    Console.Write(vbLf + "ID: ")
                     Dim id As String = Console.ReadLine()
                     Dim deleted_id As Guid = Guid.Parse(id)
                     For Each TaskItem In _taskitems
                         If TaskItem.Id = deleted_id Then
                             _taskitems.Remove(TaskItem)
+                            Exit For
                         End If
                     Next
                     _repository.SaveTasks(_taskitems)
+                    Console.WriteLine("Task removed succesfully.")
                     Return True
                 Case Commands._help
-                    Console.WriteLine(vbLf + "Following commands can be used: " + vbLf + vbLf +
+                    Console.WriteLine("****************************************************************" + vbLf)
+                    Console.WriteLine("Following commands can be used: " + vbLf + vbLf +
                                       "<add>:       adds a new task" + vbLf +
                                       "<list>:      lists all tasks" + vbLf +
                                       "<list open>: lists all open tasks" + vbLf +
@@ -148,8 +167,10 @@ Public Class TaskService
                                       "<complete>:  marks a task as complete" + vbLf +
                                       "<delete>:    deletes a task" + vbLf +
                                       "<exit>:      terminates the program" + vbLf)
+                    Console.WriteLine(vbLf + "****************************************************************" + vbLf)
                     Return True
                 Case Commands._exit
+                    Console.WriteLine(vbLf + "Terminating Program..." + vbLf)
                     Return False
                 Case Commands._invalid
                     Throw New InvalidCommandException()
@@ -157,10 +178,10 @@ Public Class TaskService
             End Select
 
         Catch ex As InvalidCommandException
-            Console.WriteLine(ex.Message)
+            Console.WriteLine(ex.Message + vbLf)
             Return True
         Catch ex As Exception
-            Console.WriteLine("Unknown Exception: " + ex.Message + " Terminating Program...")
+            Console.WriteLine("Unknown Exception: " + ex.Message + " Terminating Program..." + vbLf)
             Return False
         End Try
 
