@@ -129,32 +129,93 @@ Public Class TaskService
                     Console.WriteLine(vbLf + "****************************************************************" + vbLf)
                     Return True
                 Case Commands._complete_id
-                    Console.Write(vbLf + "ID: ")
-                    Dim id As String = Console.ReadLine()
-                    Dim completed_id As Guid = Guid.Parse(id)
-                    For Each TaskItem In _taskitems
-                        If TaskItem.Id = completed_id Then
-                            If TaskItem.IsCompleted() Then
-                                Console.WriteLine(vbLf + "Task was already completed!" + vbLf)
-                                Return True
+                    Try
+                        Console.Write(vbLf + "ID: ")
+                        Dim id As String = Console.ReadLine()
+                        Dim completed_id As Guid = Guid.Parse(id)
+                        For Each TaskItem In _taskitems
+                            Dim completed_sth As Boolean = False
+                            If TaskItem.Id = completed_id Then
+                                If TaskItem.IsCompleted() Then
+                                    Console.WriteLine(vbLf + "Task was already completed!" + vbLf)
+                                    Return True
+                                End If
+                                TaskItem.Complete()
+                                completed_sth = True
                             End If
-                            TaskItem.Complete()
-                        End If
-                    Next
-                    _repository.SaveTasks(_taskitems)
+                            If Not completed_sth Then
+                                Throw New InvalidIdException()
+                            End If
+                        Next
+                    Catch ex As InvalidIdException
+                        Console.WriteLine(vbLf + "Task Id exception: " + ex.Message + " Try again with valid task id!" + vbLf)
+                        Return True
+                    Catch ex As System.FormatException
+                        Console.WriteLine(vbLf + "Format exception: " + ex.Message + " Try again with valid task id!" + vbLf)
+                        Return True
+                    Catch ex As Exception
+                        Console.WriteLine(vbLf + "Unhandled Exception: " + ex.Message + vbLf)
+                        Console.WriteLine("Terminating program...")
+                        Return False
+                    End Try
+
+                    Try
+                        _repository.SaveTasks(_taskitems)
+                    Catch ex As InvalidFileException
+                        Console.WriteLine(vbLf + ex.Message + vbLf)
+                        Console.WriteLine("Terminating program...")
+                        Return False
+                    Catch ex As Exception
+                        Console.WriteLine(vbLf + ex.Message + vbLf)
+                        Console.WriteLine("Terminating program...")
+                        Return False
+                    End Try
+
                     Console.WriteLine(vbLf + "Task completed successfully. Great job!" + vbLf)
                     Return True
                 Case Commands._delete_id
-                    Console.Write(vbLf + "ID: ")
-                    Dim id As String = Console.ReadLine()
-                    Dim deleted_id As Guid = Guid.Parse(id)
-                    For Each TaskItem In _taskitems
-                        If TaskItem.Id = deleted_id Then
-                            _taskitems.Remove(TaskItem)
-                            Exit For
+                    Try
+                        Console.Write(vbLf + "ID: ")
+                        Dim id As String = Console.ReadLine()
+                        Dim deleted_id As Guid = Guid.Parse(id)
+
+                        Dim deleted_sth As Boolean = False
+
+                        For Each TaskItem In _taskitems
+                            If TaskItem.Id = deleted_id Then
+                                _taskitems.Remove(TaskItem)
+                                deleted_sth = True
+                                Exit For
+                            End If
+                        Next
+
+                        If Not deleted_sth Then
+                            Throw New InvalidIdException
                         End If
-                    Next
-                    _repository.SaveTasks(_taskitems)
+
+                    Catch ex As InvalidIdException
+                        Console.WriteLine(vbLf + ex.Message + " Try again with valid task id!" + vbLf)
+                        Return True
+                    Catch ex As System.FormatException
+                        Console.WriteLine(vbLf + "Format Exception: " + ex.Message + " Try again with valid task id!" + vbLf)
+                        Return True
+                    Catch ex As Exception
+                        Console.WriteLine(vbLf + "Unhandled Exception: " + ex.Message + vbLf)
+                        Console.WriteLine("Terminating program...")
+                        Return False
+                    End Try
+
+                    Try
+                        _repository.SaveTasks(_taskitems)
+                    Catch ex As InvalidFileException
+                        Console.WriteLine(vbLf + ex.Message + vbLf)
+                        Console.WriteLine("Terminating program...")
+                        Return False
+                    Catch ex As Exception
+                        Console.WriteLine(vbLf + ex.Message + vbLf)
+                        Console.WriteLine("Terminating program...")
+                        Return False
+                    End Try
                     Console.WriteLine("Task removed succesfully.")
                     Return True
                 Case Commands._help

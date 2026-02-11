@@ -26,6 +26,11 @@ Public Class Repository
     End Function
 
     Public Sub SaveTasks(tasks As List(Of TaskItem)) Implements IRepository.Save
+
+        If Not File.Exists(_filepath) Then
+            Throw New InvalidFileException()
+        End If
+
         Dim data As String = JsonSerializer.Serialize(tasks)
         File.WriteAllText(_filepath, data)
     End Sub
