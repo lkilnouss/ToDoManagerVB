@@ -14,8 +14,9 @@ Module Program
         Console.WriteLine(vbLf)
 
         Dim taskservice As New TaskService("../../../res/Tasks.json")
+        Dim Running As Boolean = True
 
-        While Running = True
+        While Running
 
             Running = taskservice.HandleCommand()
 

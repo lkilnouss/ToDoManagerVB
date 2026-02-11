@@ -3,6 +3,7 @@ Imports System.Collections.Specialized
 Imports System.ComponentModel
 Imports System.IO
 Imports System.Linq
+Imports System.Runtime.CompilerServices
 Imports System.Text.Json
 
 Public Enum Commands
@@ -18,7 +19,6 @@ Public Enum Commands
     _delete_all = 9
 End Enum
 
-' Encapsulate ParseCommand in a Module
 Public Module CommandParser
     Public Function ParseCommand(c As String) As Commands
         Select Case c
@@ -76,185 +76,26 @@ Public Class TaskService
             Dim cmd As Commands = PollCommands()
             Select Case cmd
                 Case Commands._add
-                    Console.Write(vbLf + "Title: ")
-                    Dim title As String = Console.ReadLine()
-                    Console.Write(vbLf + "Description: ")
-                    Dim description As String = Console.ReadLine()
-                    Dim task As New TaskItem(title, description)
-                    _taskitems.Add(task)
-                    _repository.SaveTasks(_taskitems)
-                    Console.WriteLine(vbLf + "Task created succesfully!" + vbLf)
-                    Return True
+                    Return ExecuteAdd()
                 Case Commands._list
-                    Console.WriteLine("****************************************************************" + vbLf)
-                    If _taskitems.Count = 0 Then
-                        Console.WriteLine("No tasks to be done")
-                    End If
-                    For Each TaskItem In _taskitems
-                        Console.Write("ID: " + TaskItem.Id.ToString +
-                                          vbLf + "Task: " + TaskItem.Title +
-                                          vbLf + "Description: " + TaskItem.Description +
-                                          vbLf + "Created at: " + TaskItem.CreatedAt +
-                                          vbLf + "Completed: " + TaskItem.IsCompleted.ToString +
-                                          vbLf)
-                        If TaskItem.IsCompleted Then
-                            Console.WriteLine("Completed at: " + TaskItem.CompletedAt + vbLf)
-                        End If
-                    Next
-                    Console.WriteLine(vbLf + "****************************************************************" + vbLf)
-                    Return True
+                    Return ExecuteList()
                 Case Commands._list_open
-                    Console.WriteLine("****************************************************************" + vbLf)
-                    For Each TaskItem In _taskitems
-                        If Not TaskItem.IsCompleted Then
-                            Console.WriteLine(vbLf + "ID: " + TaskItem.Id.ToString +
-                                              vbLf + "Task: " + TaskItem.Title +
-                                              vbLf + "Description: " + TaskItem.Description +
-                                              vbLf + "Created at: " + TaskItem.CreatedAt +
-                                              vbLf)
-                        End If
-                    Next
-                    Console.WriteLine(vbLf + "****************************************************************" + vbLf)
-                    Return True
+                    Return ExecuteListOpen()
                 Case Commands._list_done
-                    Console.WriteLine("****************************************************************" + vbLf)
-                    For Each TaskItem In _taskitems
-                        If TaskItem.IsCompleted Then
-                            Console.WriteLine(vbLf + "ID: " + TaskItem.Id.ToString +
-                                              vbLf + "Task: " + TaskItem.Title +
-                                              vbLf + "Description: " + TaskItem.Description +
-                                              vbLf + "Created at: " + TaskItem.CreatedAt +
-                                              vbLf + "Completed: " + TaskItem.IsCompleted.ToString +
-                                              vbLf + "Completed at: " + TaskItem.CompletedAt +
-                                              vbLf)
-                        End If
-                    Next
-                    Console.WriteLine(vbLf + "****************************************************************" + vbLf)
-                    Return True
+                    Return ExecuteListDone()
                 Case Commands._complete_id
-                    Try
-                        Console.Write(vbLf + "ID: ")
-                        Dim id As String = Console.ReadLine()
-                        Dim completed_id As Guid = Guid.Parse(id)
-                        Dim completed_sth As Boolean = False
-                        For Each TaskItem In _taskitems
-                            If TaskItem.Id = completed_id Then
-                                If TaskItem.IsCompleted() Then
-                                    Console.WriteLine(vbLf + "Task was already completed!" + vbLf)
-                                    Return True
-                                End If
-                                TaskItem.Complete()
-                                completed_sth = True
-                            End If
-                        Next
-                        If Not completed_sth Then
-                            Throw New InvalidIdException()
-                        End If
-                    Catch ex As InvalidIdException
-                        Console.WriteLine(vbLf + "Task Id exception: " + ex.Message + " Try again with valid task id!" + vbLf)
-                        Return True
-                    Catch ex As System.FormatException
-                        Console.WriteLine(vbLf + "Format exception: " + ex.Message + " Try again with valid task id!" + vbLf)
-                        Return True
-                    Catch ex As Exception
-                        Console.WriteLine(vbLf + "Unhandled Exception: " + ex.Message + vbLf)
-                        Console.WriteLine("Terminating program...")
-                        Return False
-                    End Try
-
-                    Try
-                        _repository.SaveTasks(_taskitems)
-                    Catch ex As InvalidFileException
-                        Console.WriteLine(vbLf + ex.Message + vbLf)
-                        Console.WriteLine("Terminating program...")
-                        Return False
-                    Catch ex As Exception
-                        Console.WriteLine(vbLf + ex.Message + vbLf)
-                        Console.WriteLine("Terminating program...")
-                        Return False
-                    End Try
-
-                    Console.WriteLine(vbLf + "Task completed successfully. Great job!" + vbLf)
-                    Return True
+                    Return ExecuteComplete()
                 Case Commands._delete_id
-                    Try
-                        Console.Write(vbLf + "ID: ")
-                        Dim id As String = Console.ReadLine()
-                        Dim deleted_id As Guid = Guid.Parse(id)
-
-                        Dim deleted_sth As Boolean = False
-
-                        For Each TaskItem In _taskitems
-                            If TaskItem.Id = deleted_id Then
-                                _taskitems.Remove(TaskItem)
-                                deleted_sth = True
-                                Exit For
-                            End If
-                        Next
-
-                        If Not deleted_sth Then
-                            Throw New InvalidIdException
-                        End If
-
-                    Catch ex As InvalidIdException
-                        Console.WriteLine(vbLf + ex.Message + " Try again with valid task id!" + vbLf)
-                        Return True
-                    Catch ex As System.FormatException
-                        Console.WriteLine(vbLf + "Format Exception: " + ex.Message + " Try again with valid task id!" + vbLf)
-                        Return True
-                    Catch ex As Exception
-                        Console.WriteLine(vbLf + "Unhandled Exception: " + ex.Message + vbLf)
-                        Console.WriteLine("Terminating program...")
-                        Return False
-                    End Try
-
-                    Try
-                        _repository.SaveTasks(_taskitems)
-                    Catch ex As InvalidFileException
-                        Console.WriteLine(vbLf + ex.Message + vbLf)
-                        Console.WriteLine("Terminating program...")
-                        Return False
-                    Catch ex As Exception
-                        Console.WriteLine(vbLf + ex.Message + vbLf)
-                        Console.WriteLine("Terminating program...")
-                        Return False
-                    End Try
-                    Console.WriteLine("Task removed succesfully.")
-                    Return True
+                    Return ExecuteDelete()
                 Case Commands._help
-                    Console.WriteLine("****************************************************************" + vbLf)
-                    Console.WriteLine("Following commands can be used: " + vbLf + vbLf +
-                                      "<add>:        adds a new task" + vbLf +
-                                      "<list>:       lists all tasks" + vbLf +
-                                      "<list open>:  lists all open tasks" + vbLf +
-                                      "<list done>:  lists all done tasks" + vbLf +
-                                      "<complete>:   marks a task as complete" + vbLf +
-                                      "<delete>:     deletes a task" + vbLf +
-                                      "<delete all>: deletes all tasks" + vbLf +
-                                      "<exit>:       terminates the program" + vbLf)
-                    Console.WriteLine(vbLf + "****************************************************************" + vbLf)
-                    Return True
+                    Return ExecuteHelp()
                 Case Commands._exit
-                    Console.WriteLine(vbLf + "Terminating Program..." + vbLf)
-                    Return False
+                    Return ExecuteExit()
                 Case Commands._invalid
                     Throw New InvalidCommandException()
                     Return True
                 Case Commands._delete_all
-                    _taskitems = New List(Of TaskItem)
-                    Try
-                        _repository.SaveTasks(_taskitems)
-                    Catch ex As InvalidFileException
-                        Console.WriteLine(vbLf + ex.Message + vbLf)
-                        Console.WriteLine("Terminating program...")
-                        Return False
-                    Catch ex As Exception
-                        Console.WriteLine(vbLf + "Unhandled Exception: " + ex.Message + vbLf)
-                        Console.WriteLine("Terminating program...")
-                        Return False
-                    End Try
-                    Console.WriteLine(vbLf + "Successfully deleted all tasks!" + vbLf)
-                    Return True
+                    Return ExecuteDeleteAll()
             End Select
 
         Catch ex As InvalidCommandException
@@ -264,6 +105,201 @@ Public Class TaskService
             Console.WriteLine("Unknown Exception: " + ex.Message + " Terminating Program..." + vbLf)
             Return False
         End Try
+        Return True
+    End Function
+
+    Private Function ExecuteAdd() As Boolean
+        Console.Write(vbLf + "Title: ")
+        Dim title As String = Console.ReadLine()
+        Console.Write(vbLf + "Description: ")
+        Dim description As String = Console.ReadLine()
+        Dim task As New TaskItem(title, description)
+        _taskitems.Add(task)
+        _repository.SaveTasks(_taskitems)
+        Console.WriteLine(vbLf + "Task created succesfully!" + vbLf)
+        Return True
+    End Function
+
+    Private Function ExecuteList() As Boolean
+        Console.WriteLine("****************************************************************" + vbLf)
+        If _taskitems.Count = 0 Then
+            Console.WriteLine("No tasks to be done")
+        End If
+        For Each TaskItem In _taskitems
+            Console.Write("ID: " + TaskItem.Id.ToString +
+                              vbLf + "Task: " + TaskItem.Title +
+                              vbLf + "Description: " + TaskItem.Description +
+                              vbLf + "Created at: " + TaskItem.CreatedAt +
+                              vbLf + "Completed: " + TaskItem.IsCompleted.ToString +
+                              vbLf)
+            If TaskItem.IsCompleted Then
+                Console.WriteLine("Completed at: " + TaskItem.CompletedAt + vbLf)
+            End If
+        Next
+        Console.WriteLine(vbLf + "****************************************************************" + vbLf)
+        Return True
+    End Function
+
+    Private Function ExecuteListDone() As Boolean
+        Console.WriteLine("****************************************************************" + vbLf)
+        For Each TaskItem In _taskitems
+            If TaskItem.IsCompleted Then
+                Console.WriteLine(vbLf + "ID: " + TaskItem.Id.ToString +
+                                  vbLf + "Task: " + TaskItem.Title +
+                                  vbLf + "Description: " + TaskItem.Description +
+                                  vbLf + "Created at: " + TaskItem.CreatedAt +
+                                  vbLf + "Completed: " + TaskItem.IsCompleted.ToString +
+                                  vbLf + "Completed at: " + TaskItem.CompletedAt +
+                                  vbLf)
+            End If
+        Next
+        Console.WriteLine(vbLf + "****************************************************************" + vbLf)
+        Return True
+    End Function
+
+    Private Function ExecuteListOpen() As Boolean
+        Console.WriteLine("****************************************************************" + vbLf)
+        For Each TaskItem In _taskitems
+            If Not TaskItem.IsCompleted Then
+                Console.WriteLine(vbLf + "ID: " + TaskItem.Id.ToString +
+                                  vbLf + "Task: " + TaskItem.Title +
+                                  vbLf + "Description: " + TaskItem.Description +
+                                  vbLf + "Created at: " + TaskItem.CreatedAt +
+                                  vbLf)
+            End If
+        Next
+        Console.WriteLine(vbLf + "****************************************************************" + vbLf)
+        Return True
+    End Function
+
+    Private Function ExecuteDelete() As Boolean
+        Try
+            Console.Write(vbLf + "ID: ")
+            Dim id As String = Console.ReadLine()
+            Dim deleted_id As Guid = Guid.Parse(id)
+
+            Dim deleted_sth As Boolean = False
+
+            For Each TaskItem In _taskitems
+                If TaskItem.Id = deleted_id Then
+                    _taskitems.Remove(TaskItem)
+                    deleted_sth = True
+                    Exit For
+                End If
+            Next
+
+            If Not deleted_sth Then
+                Throw New InvalidIdException
+            End If
+
+        Catch ex As InvalidIdException
+            Console.WriteLine(vbLf + ex.Message + " Try again with valid task id!" + vbLf)
+            Return True
+        Catch ex As System.FormatException
+            Console.WriteLine(vbLf + "Format Exception: " + ex.Message + " Try again with valid task id!" + vbLf)
+            Return True
+        Catch ex As Exception
+            Console.WriteLine(vbLf + "Unhandled Exception: " + ex.Message + vbLf)
+            Console.WriteLine("Terminating program...")
+            Return False
+        End Try
+
+        Try
+            _repository.SaveTasks(_taskitems)
+        Catch ex As InvalidFileException
+            Console.WriteLine(vbLf + ex.Message + vbLf)
+            Console.WriteLine("Terminating program...")
+            Return False
+        Catch ex As Exception
+            Console.WriteLine(vbLf + ex.Message + vbLf)
+            Console.WriteLine("Terminating program...")
+            Return False
+        End Try
+        Console.WriteLine("Task removed succesfully.")
+        Return True
+    End Function
+
+    Private Function ExecuteComplete() As Boolean
+        Try
+            Console.Write(vbLf + "ID: ")
+            Dim id As String = Console.ReadLine()
+            Dim completed_id As Guid = Guid.Parse(id)
+            Dim completed_sth As Boolean = False
+            For Each TaskItem In _taskitems
+                If TaskItem.Id = completed_id Then
+                    If TaskItem.IsCompleted() Then
+                        Console.WriteLine(vbLf + "Task was already completed!" + vbLf)
+                        Return True
+                    End If
+                    TaskItem.Complete()
+                    completed_sth = True
+                End If
+            Next
+            If Not completed_sth Then
+                Throw New InvalidIdException()
+            End If
+        Catch ex As InvalidIdException
+            Console.WriteLine(vbLf + "Task Id exception: " + ex.Message + " Try again with valid task id!" + vbLf)
+            Return True
+        Catch ex As System.FormatException
+            Console.WriteLine(vbLf + "Format exception: " + ex.Message + " Try again with valid task id!" + vbLf)
+            Return True
+        Catch ex As Exception
+            Console.WriteLine(vbLf + "Unhandled Exception: " + ex.Message + vbLf)
+            Console.WriteLine("Terminating program...")
+            Return False
+        End Try
+
+        Try
+            _repository.SaveTasks(_taskitems)
+        Catch ex As InvalidFileException
+            Console.WriteLine(vbLf + ex.Message + vbLf)
+            Console.WriteLine("Terminating program...")
+            Return False
+        Catch ex As Exception
+            Console.WriteLine(vbLf + ex.Message + vbLf)
+            Console.WriteLine("Terminating program...")
+            Return False
+        End Try
+
+        Console.WriteLine(vbLf + "Task completed successfully. Great job!" + vbLf)
+        Return True
+    End Function
+
+    Private Function ExecuteDeleteAll() As Boolean
+        _taskitems = New List(Of TaskItem)
+        Try
+            _repository.SaveTasks(_taskitems)
+        Catch ex As InvalidFileException
+            Console.WriteLine(vbLf + ex.Message + vbLf)
+            Console.WriteLine("Terminating program...")
+            Return False
+        Catch ex As Exception
+            Console.WriteLine(vbLf + "Unhandled Exception: " + ex.Message + vbLf)
+            Console.WriteLine("Terminating program...")
+            Return False
+        End Try
+        Console.WriteLine(vbLf + "Successfully deleted all tasks!" + vbLf)
+        Return True
+    End Function
+
+    Private Function ExecuteExit() As Boolean
+        Console.WriteLine(vbLf + "Terminating Program..." + vbLf)
+        Return False
+    End Function
+
+    Private Function ExecuteHelp() As Boolean
+        Console.WriteLine("****************************************************************" + vbLf)
+        Console.WriteLine("Following commands can be used: " + vbLf + vbLf +
+                          "<add>:        adds a new task" + vbLf +
+                          "<list>:       lists all tasks" + vbLf +
+                          "<list open>:  lists all open tasks" + vbLf +
+                          "<list done>:  lists all done tasks" + vbLf +
+                          "<complete>:   marks a task as complete" + vbLf +
+                          "<delete>:     deletes a task" + vbLf +
+                          "<delete all>: deletes all tasks" + vbLf +
+                          "<exit>:       terminates the program" + vbLf)
+        Console.WriteLine(vbLf + "****************************************************************" + vbLf)
         Return True
     End Function
 End Class
