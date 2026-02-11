@@ -133,8 +133,8 @@ Public Class TaskService
                         Console.Write(vbLf + "ID: ")
                         Dim id As String = Console.ReadLine()
                         Dim completed_id As Guid = Guid.Parse(id)
+                        Dim completed_sth As Boolean = False
                         For Each TaskItem In _taskitems
-                            Dim completed_sth As Boolean = False
                             If TaskItem.Id = completed_id Then
                                 If TaskItem.IsCompleted() Then
                                     Console.WriteLine(vbLf + "Task was already completed!" + vbLf)
@@ -143,10 +143,10 @@ Public Class TaskService
                                 TaskItem.Complete()
                                 completed_sth = True
                             End If
-                            If Not completed_sth Then
-                                Throw New InvalidIdException()
-                            End If
                         Next
+                        If Not completed_sth Then
+                            Throw New InvalidIdException()
+                        End If
                     Catch ex As InvalidIdException
                         Console.WriteLine(vbLf + "Task Id exception: " + ex.Message + " Try again with valid task id!" + vbLf)
                         Return True
