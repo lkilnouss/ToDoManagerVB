@@ -15,6 +15,7 @@ Public Enum Commands
     _help = 6
     _exit = 7
     _invalid = 8
+    _delete_all = 9
 End Enum
 
 ' Encapsulate ParseCommand in a Module
@@ -37,6 +38,8 @@ Public Module CommandParser
                 Return Commands._help
             Case "exit", "exit "
                 Return Commands._exit
+            Case "delete all", "delete all "
+                Return Commands._delete_all
             Case Else
                 Return Commands._invalid
         End Select
@@ -85,7 +88,7 @@ Public Class TaskService
                 Case Commands._list
                     Console.WriteLine("****************************************************************" + vbLf)
                     If _taskitems.Count = 0 Then
-                        Console.WriteLine("No tasks to be done" + vbLf)
+                        Console.WriteLine("No tasks to be done")
                     End If
                     For Each TaskItem In _taskitems
                         Console.Write("ID: " + TaskItem.Id.ToString +
@@ -221,13 +224,14 @@ Public Class TaskService
                 Case Commands._help
                     Console.WriteLine("****************************************************************" + vbLf)
                     Console.WriteLine("Following commands can be used: " + vbLf + vbLf +
-                                      "<add>:       adds a new task" + vbLf +
-                                      "<list>:      lists all tasks" + vbLf +
-                                      "<list open>: lists all open tasks" + vbLf +
-                                      "<list done>: lists all done tasks" + vbLf +
-                                      "<complete>:  marks a task as complete" + vbLf +
-                                      "<delete>:    deletes a task" + vbLf +
-                                      "<exit>:      terminates the program" + vbLf)
+                                      "<add>:        adds a new task" + vbLf +
+                                      "<list>:       lists all tasks" + vbLf +
+                                      "<list open>:  lists all open tasks" + vbLf +
+                                      "<list done>:  lists all done tasks" + vbLf +
+                                      "<complete>:   marks a task as complete" + vbLf +
+                                      "<delete>:     deletes a task" + vbLf +
+                                      "<delete all>: deletes all tasks" + vbLf +
+                                      "<exit>:       terminates the program" + vbLf)
                     Console.WriteLine(vbLf + "****************************************************************" + vbLf)
                     Return True
                 Case Commands._exit
@@ -235,6 +239,21 @@ Public Class TaskService
                     Return False
                 Case Commands._invalid
                     Throw New InvalidCommandException()
+                    Return True
+                Case Commands._delete_all
+                    _taskitems = New List(Of TaskItem)
+                    Try
+                        _repository.SaveTasks(_taskitems)
+                    Catch ex As InvalidFileException
+                        Console.WriteLine(vbLf + ex.Message + vbLf)
+                        Console.WriteLine("Terminating program...")
+                        Return False
+                    Catch ex As Exception
+                        Console.WriteLine(vbLf + "Unhandled Exception: " + ex.Message + vbLf)
+                        Console.WriteLine("Terminating program...")
+                        Return False
+                    End Try
+                    Console.WriteLine(vbLf + "Successfully deleted all tasks!" + vbLf)
                     Return True
             End Select
 
@@ -245,7 +264,7 @@ Public Class TaskService
             Console.WriteLine("Unknown Exception: " + ex.Message + " Terminating Program..." + vbLf)
             Return False
         End Try
-
+        Return True
     End Function
 End Class
 
