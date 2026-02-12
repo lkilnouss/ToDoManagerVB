@@ -23,6 +23,8 @@
 -> use specified commands. You will be asked for the project ID for completing and deleting tasks, which you can find via "list"
 
 ##
+![Error loading image file!](res/images/example.png)
+##
 
 `For reference`:
 
