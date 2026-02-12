@@ -4,8 +4,6 @@ Imports System.IO
 
 Module Program
 
-    Dim Running As Boolean = True
-
     Sub Main()
 
         Console.WriteLine("*******************************************************************************************************************")

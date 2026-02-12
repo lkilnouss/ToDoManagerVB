@@ -1,6 +1,7 @@
 ﻿Imports System.Collections.Generic
 Imports System.Collections.Specialized
 Imports System.ComponentModel
+Imports System.Globalization
 Imports System.IO
 Imports System.Linq
 Imports System.Runtime.CompilerServices
@@ -17,6 +18,7 @@ Public Enum Commands
     _exit = 7
     _invalid = 8
     _delete_all = 9
+    _create_appointment = 10
 End Enum
 
 Public Module CommandParser
@@ -40,6 +42,8 @@ Public Module CommandParser
                 Return Commands._exit
             Case "delete all", "delete all "
                 Return Commands._delete_all
+            Case "create appointment", "create appointment "
+                Return Commands._create_appointment
             Case Else
                 Return Commands._invalid
         End Select
@@ -96,6 +100,8 @@ Public Class TaskService
                     Return True
                 Case Commands._delete_all
                     Return ExecuteDeleteAll()
+                Case Commands._create_appointment
+                    Return ExecuteAppointment()
             End Select
 
         Catch ex As InvalidCommandException
@@ -291,15 +297,41 @@ Public Class TaskService
     Private Function ExecuteHelp() As Boolean
         Console.WriteLine("****************************************************************" + vbLf)
         Console.WriteLine("Following commands can be used: " + vbLf + vbLf +
-                          "<add>:        adds a new task" + vbLf +
-                          "<list>:       lists all tasks" + vbLf +
-                          "<list open>:  lists all open tasks" + vbLf +
-                          "<list done>:  lists all done tasks" + vbLf +
-                          "<complete>:   marks a task as complete" + vbLf +
-                          "<delete>:     deletes a task" + vbLf +
-                          "<delete all>: deletes all tasks" + vbLf +
-                          "<exit>:       terminates the program" + vbLf)
+                          "<add>:                adds a new task" + vbLf +
+                          "<list>:               lists all tasks" + vbLf +
+                          "<list open>:          lists all open tasks" + vbLf +
+                          "<list done>:          lists all done tasks" + vbLf +
+                          "<complete>:           marks a task as complete" + vbLf +
+                          "<delete>:             deletes a task" + vbLf +
+                          "<delete all>:         deletes all tasks" + vbLf +
+                          "<create appointment>: creates an .ics file ready for import into calendars" + vbLf +
+                          "<exit>:               terminates the program" + vbLf)
         Console.WriteLine(vbLf + "****************************************************************" + vbLf)
+        Return True
+    End Function
+
+    Private Function ExecuteAppointment() As Boolean
+        Console.Write(vbLf + "Title: ")
+        Dim title As String = Console.ReadLine()
+
+        Console.Write(vbLf + "Description: ")
+        Dim descr As String = Console.ReadLine()
+
+        Console.Write(vbLf + "Location: ")
+        Dim loc As String = Console.ReadLine()
+
+        Console.Write(vbLf + "Start time(Format: <yyyy-MM-dd HH:mm:ss>): ")
+        Dim start_time As DateTime = DateTime.ParseExact(Console.ReadLine(), "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
+
+        Console.Write(vbLf + "Duration (in hours): ")
+        Dim end_time As DateTime = start_time.AddHours(Console.ReadLine())
+
+        Console.Write(vbLf + "Type(public or private): ")
+        Dim type As String = Console.ReadLine()
+
+        Dim appointment As New CalendarItem(loc, title, descr, start_time, end_time)
+
+        _repository.SaveCal(appointment)
         Return True
     End Function
 End Class

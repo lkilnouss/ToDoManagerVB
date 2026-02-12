@@ -6,4 +6,8 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="res\output\calendar\" />
+  </ItemGroup>
+
 </Project>
