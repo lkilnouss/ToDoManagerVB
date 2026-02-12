@@ -1,4 +1,5 @@
 ﻿Imports System.IO
+Imports System.Linq.Expressions
 Imports System.Runtime.Serialization
 Imports System.Text.Json
 
@@ -40,6 +41,10 @@ Public Class Repository
 
     Public Sub SaveCal(appoint As CalendarItem) Implements ICalendar.Save
         Dim output_path As String = "../../../res/output/calendar/" + appoint.Title + ".ics"
+
+        If Not File.Exists(output_path) Then
+            Throw New InvalidFileException()
+        End If
 
         Dim start_time As String = Format(appoint.Start_, "yyyyMMdd\THHmmss\Z")
         Dim end_time As String = Format(appoint.End_, "yyyyMMdd\THHmmss\Z")

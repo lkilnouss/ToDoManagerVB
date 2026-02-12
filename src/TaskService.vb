@@ -320,18 +320,33 @@ Public Class TaskService
         Console.Write(vbLf + "Location: ")
         Dim loc As String = Console.ReadLine()
 
-        Console.Write(vbLf + "Start time(Format: <yyyy-MM-dd HH:mm:ss>): ")
-        Dim start_time As DateTime = DateTime.ParseExact(Console.ReadLine(), "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
+        Dim start_time As DateTime
+
+        Try
+            Console.Write(vbLf + "Start time(Format: <yyyy-MM-dd HH:mm:ss>): ")
+            start_time = DateTime.ParseExact(Console.ReadLine(), "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
+        Catch ex As FormatException
+            Console.WriteLine(vbLf + "Format Exception: " + ex.Message + " Try again with valid Date and Time format!" + vbLf)
+            Return True
+        Catch ex As Exception
+            Console.WriteLine(vbLf + "Unhandled Exception: " + ex.Message + vbLf + "Terminating program..." + vbLf)
+            Return False
+        End Try
 
         Console.Write(vbLf + "Duration (in hours): ")
         Dim end_time As DateTime = start_time.AddHours(Console.ReadLine())
 
-        Console.Write(vbLf + "Type(public or private): ")
-        Dim type As String = Console.ReadLine()
+        Try
+            Dim appointment As New CalendarItem(loc, title, descr, start_time, end_time)
+            _repository.SaveCal(appointment)
 
-        Dim appointment As New CalendarItem(loc, title, descr, start_time, end_time)
-
-        _repository.SaveCal(appointment)
+        Catch ex As InvalidFileException
+            Console.WriteLine(vbLf + "Exception while saving to file: " + ex.Message + vbLf)
+            Return False
+        Catch ex As Exception
+            Console.WriteLine(vbLf + "Unhandled Exception: " + ex.Message + vbLf + "Terminating program...")
+            Return False
+        End Try
         Return True
     End Function
 End Class
