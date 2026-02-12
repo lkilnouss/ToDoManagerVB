@@ -347,6 +347,7 @@ Public Class TaskService
             Console.WriteLine(vbLf + "Unhandled Exception: " + ex.Message + vbLf + "Terminating program...")
             Return False
         End Try
+        Console.WriteLine(vbLf + "Successfully created calendar file!" + vbLf)
         Return True
     End Function
 End Class
